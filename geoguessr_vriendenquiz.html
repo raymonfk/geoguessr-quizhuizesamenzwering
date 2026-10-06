@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GeoGuessr Vriendenquiz</title>
+
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIINfQ3M0w5J5xZp5dY5rYQ5v0JQY8YfQw="
+      crossorigin=""/>
+
+<style>
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #111827;
+    color: white;
+}
+.top {
+    padding: 14px 16px 10px;
+    text-align: center;
+}
+.top h1 { margin: 0; font-size: 22px; }
+.top p { margin: 5px 0 0; color: #cbd5e1; font-size: 14px; }
+
+#map {
+    width: 100%;
+    height: 65vh;
+    min-height: 400px;
+}
+
+.panel {
+    padding: 12px 16px 18px;
+    background: #111827;
+}
+input {
+    width: 100%;
+    padding: 13px;
+    border-radius: 10px;
+    border: 1px solid #475569;
+    background: #1e293b;
+    color: white;
+    font-size: 16px;
+    margin-bottom: 9px;
+}
+button {
+    width: 100%;
+    padding: 15px;
+    border: 0;
+    border-radius: 10px;
+    font-size: 17px;
+    font-weight: bold;
+    background: #22c55e;
+    color: white;
+}
+button:disabled {
+    background: #475569;
+}
+#selected {
+    text-align: center;
+    color: #cbd5e1;
+    font-size: 14px;
+    margin: 5px 0 10px;
+}
+.help {
+    text-align: center;
+    font-size: 13px;
+    color: #94a3b8;
+    margin-top: 9px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="top">
+    <h1>🌍 GeoGuessr Quiz</h1>
+    <p id="roundText">Ronde 1 — kies jouw locatie</p>
+</div>
+
+<div id="map"></div>
+
+<div class="panel">
+    <input id="name" type="text" placeholder="Jouw naam">
+    <div id="selected">Tik op de kaart om je gok te plaatsen</div>
+    <button id="send" disabled>📍 Antwoord versturen via WhatsApp</button>
+    <div class="help">Je kunt je pin verplaatsen door opnieuw op de kaart te tikken.</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+
+<script>
+// ============================================================
+// INSTELLINGEN
+// ============================================================
+
+// Vul hier jouw WhatsApp-nummer in.
+// Gebruik landcode zonder + of spaties.
+// Nederland bijvoorbeeld: 31612345678
+const ORGANIZER_WHATSAPP = "VUL_HIER_JOUW_NUMMER_IN";
+
+// Pas per ronde alleen dit getal aan.
+const ROUND = 1;
+
+// ============================================================
+
+const map = L.map('map').setView([20, 0], 2);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+let marker = null;
+let answer = null;
+
+document.getElementById("roundText").textContent =
+    "Ronde " + ROUND + " — kies jouw locatie";
+
+map.on("click", function(e) {
+    answer = {
+        lat: e.latlng.lat,
+        lon: e.latlng.lng
+    };
+
+    if (marker) {
+        marker.setLatLng(e.latlng);
+    } else {
+        marker = L.marker(e.latlng).addTo(map);
+    }
+
+    document.getElementById("selected").textContent =
+        "📍 Locatie gekozen — je kunt de pin nog verplaatsen";
+
+    document.getElementById("send").disabled = false;
+});
+
+document.getElementById("send").addEventListener("click", function() {
+    const name = document.getElementById("name").value.trim();
+
+    if (!name) {
+        alert("Vul eerst je naam in.");
+        return;
+    }
+
+    if (!answer) {
+        alert("Kies eerst een plek op de kaart.");
+        return;
+    }
+
+    if (ORGANIZER_WHATSAPP === "VUL_HIER_JOUW_NUMMER_IN") {
+        alert("De organisator moet eerst het WhatsApp-nummer in het bestand invullen.");
+        return;
+    }
+
+    const lat = answer.lat.toFixed(6);
+    const lon = answer.lon.toFixed(6);
+
+    const message =
+        "🌍 GeoGuessr antwoord\n" +
+        "Ronde: " + ROUND + "\n" +
+        "Naam: " + name + "\n" +
+        "Latitude: " + lat + "\n" +
+        "Longitude: " + lon;
+
+    const url =
+        "https://wa.me/" + ORGANIZER_WHATSAPP +
+        "?text=" + encodeURIComponent(message);
+
+    window.location.href = url;
+});
+</script>
+
+</body>
+</html>
